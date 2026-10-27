@@ -1,0 +1,401 @@
+<title>Diário de Código</title>
+<meta name="claude:viewport-fit-sides" content="cover">
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Bagel+Fat+One&family=Nunito:wght@500;700;800&family=Space+Mono:wght@400;700&display=swap">
+<style>
+/* Conceito: álbum de figurinhas. A paleta vem da foto da Bianca: verde-azulado da camiseta,
+   cobre do cabelo, turquesa do mar, verde-oliva da sandália e a espuma clara das ondas.
+   Cada passo concluído vira uma figurinha colorida; a foto é a figurinha principal. */
+:root {
+  --bg: #E6F0EC;
+  --card: #FFFFFF;
+  --ink: #16262B;
+  --ink-2: #4C6064;
+  --line: #16262B;
+  --shadow-c: #16262B;
+  --accent: #1F6F68;
+  --copper: #E27A2E;
+  --gold: #F5C453;
+  --gold-soft: #FBEBB9;
+  --olive: #B3D45F;
+  --sea: #5CC9BA;
+  --coral: #F29A7E;
+  --on: #16262B;
+  --code-bg: #16262B;
+  --code-fg: #E6F0EC;
+  --code-line: #2D4A52;
+  --code-comment: #8FA7A8;
+  --f-display: "Bagel Fat One", "Arial Rounded MT Bold", "Trebuchet MS", system-ui, sans-serif;
+  --f-body: "Nunito", system-ui, -apple-system, "Segoe UI", sans-serif;
+  --f-mono: "Space Mono", ui-monospace, Menlo, Consolas, monospace;
+}
+@media (prefers-color-scheme: dark) {
+  :root:not([data-theme="light"]) {
+    --bg: #0F1D23;
+    --card: #172A31;
+    --ink: #E6F0EC;
+    --ink-2: #A9C0C2;
+    --line: #E6F0EC;
+    --shadow-c: #E27A2E;
+    --accent: #7FDCCD;
+    --gold-soft: #3B3417;
+    --code-bg: #0A1519;
+    color-scheme: dark;
+  }
+}
+:root[data-theme="dark"] {
+  --bg: #0F1D23;
+  --card: #172A31;
+  --ink: #E6F0EC;
+  --ink-2: #A9C0C2;
+  --line: #E6F0EC;
+  --shadow-c: #E27A2E;
+  --accent: #7FDCCD;
+  --gold-soft: #3B3417;
+  --code-bg: #0A1519;
+  color-scheme: dark;
+}
+
+* { box-sizing: border-box; }
+body {
+  background: var(--bg);
+  color: var(--ink);
+  font-family: var(--f-body);
+  font-size: 17px;
+  line-height: 1.6;
+  font-weight: 500;
+  padding-block: 28px 72px;
+  padding-left: max(16px, env(safe-area-inset-left, 0px));
+  padding-right: max(16px, env(safe-area-inset-right, 0px));
+}
+.wrap { max-width: 1040px; margin: 0 auto; display: flex; flex-direction: column; gap: 72px; }
+:focus-visible { outline: 3px solid var(--accent); outline-offset: 3px; }
+h1, h2 { font-family: var(--f-display); font-weight: 400; margin: 0; text-wrap: balance; }
+h2 { font-size: clamp(1.9rem, 5vw, 2.6rem); line-height: 1.05; }
+.note { margin: 0; color: var(--ink-2); font-size: 15px; font-weight: 700; }
+.sec-head { display: flex; flex-direction: column; gap: 8px; margin-bottom: 24px; }
+
+/* Peças reutilizáveis */
+.pill {
+  display: inline-block; font-weight: 800; font-size: 14px; line-height: 1.3; padding: 6px 14px;
+  border: 2.5px solid var(--line); border-radius: 999px; background: var(--card); color: var(--ink);
+}
+.pill.ink { background: var(--ink); color: var(--bg); }
+.tag {
+  display: inline-block; font-family: var(--f-mono); font-weight: 700; font-size: 11px; letter-spacing: .06em; text-transform: uppercase;
+  padding: 3px 10px; border: 2px solid var(--line); border-radius: 999px; background: var(--c, var(--gold)); color: var(--on);
+}
+.tag.plain { background: var(--card); color: var(--ink); }
+
+/* Hero */
+.hero { position: relative; display: grid; grid-template-columns: minmax(0, 1fr); gap: 36px; padding-top: 12px; }
+@media (min-width: 860px) { .hero { grid-template-columns: minmax(0, 1.15fr) minmax(0, .85fr); align-items: center; gap: 48px; } }
+.hero-text { display: flex; flex-direction: column; gap: 24px; min-width: 0; }
+h1 { font-size: clamp(3rem, 11vw, 6.4rem); line-height: 1; letter-spacing: -0.01em; }
+h1 .hl {
+  display: inline-block; background: var(--gold); color: var(--on); padding: 0 .22em .06em; border: 3px solid var(--line);
+  border-radius: .3em; transform: rotate(-2.5deg); box-shadow: 5px 5px 0 var(--shadow-c); margin-top: .12em;
+}
+.lede { max-width: 54ch; font-size: 1.2rem; font-weight: 700; margin: 0; }
+.hero-pills { display: flex; flex-wrap: wrap; gap: 10px; }
+
+.sticker-wrap { position: relative; min-width: 0; width: 100%; max-width: 460px; justify-self: center; padding: 30px 16px 40px; }
+.photo {
+  position: relative; z-index: 1; margin: 0; background: var(--card); border: 3px solid var(--line); border-radius: 26px;
+  overflow: hidden; box-shadow: 8px 8px 0 var(--shadow-c); transform: rotate(2deg);
+}
+.photo img { display: block; width: 100%; height: auto; aspect-ratio: 4 / 5; object-fit: cover; object-position: 50% 35%; }
+.sticker {
+  position: absolute; z-index: 2; right: 0; bottom: 8px; max-width: min(250px, 72%); transform: rotate(3deg);
+  background: var(--code-bg); color: var(--code-fg); border: 3px solid var(--line); border-radius: 16px;
+  box-shadow: 5px 5px 0 var(--shadow-c); overflow: hidden;
+}
+.sticker .bar { display: flex; gap: 6px; padding: 9px 12px; border-bottom: 2px solid var(--code-line); }
+.sticker .bar i { width: 10px; height: 10px; border-radius: 50%; display: block; }
+.sticker .bar i:nth-child(1) { background: var(--copper); }
+.sticker .bar i:nth-child(2) { background: var(--gold); }
+.sticker .bar i:nth-child(3) { background: var(--olive); }
+.sticker pre { margin: 0; padding: 12px 14px 14px; font: 400 14px/1.7 var(--f-mono); overflow: hidden; }
+.sticker .k { color: var(--coral); }
+.sticker .s { color: var(--olive); }
+.sticker .out { color: var(--code-comment); }
+.blob { position: absolute; z-index: 0; }
+.blob.a { width: 72px; height: 72px; border-radius: 50%; background: var(--copper); border: 3px solid var(--line); top: 2px; right: 0; }
+.blob.b { width: 62px; height: 62px; background: var(--gold); top: 0; left: 8px; clip-path: polygon(50% 0%, 61% 35%, 98% 35%, 68% 57%, 79% 91%, 50% 70%, 21% 91%, 32% 57%, 2% 35%, 39% 35%); }
+
+/* Álbum */
+.album { display: grid; grid-template-columns: repeat(auto-fill, minmax(min(100%, 210px), 1fr)); gap: 18px; padding: 6px; }
+.slot {
+  position: relative; display: flex; flex-direction: column; justify-content: space-between; gap: 14px; min-height: 150px; padding: 16px;
+  border: 2.5px solid var(--line); border-radius: 20px; background: var(--card); color: var(--ink);
+}
+.slot .num {
+  width: 34px; height: 34px; border-radius: 50%; border: 2.5px solid var(--line); background: var(--card); color: var(--ink);
+  display: grid; place-items: center; font-family: var(--f-mono); font-weight: 700; font-size: 14px;
+}
+.slot .st { font-weight: 800; font-size: 17px; line-height: 1.25; }
+.slot .badge { align-self: flex-start; }
+.slot.proximo { border-style: dashed; color: var(--ink-2); background: transparent; }
+.slot.proximo .num { background: transparent; color: var(--ink-2); }
+.slot.estudando { background: var(--gold); color: var(--on); box-shadow: 5px 5px 0 var(--shadow-c); transform: rotate(-1.2deg); }
+.slot.concluido { background: var(--olive); color: var(--on); box-shadow: 5px 5px 0 var(--shadow-c); transform: rotate(1.2deg); }
+.slot.estudando .num, .slot.concluido .num { background: var(--card); color: var(--on); border-color: var(--on); }
+.slot.estudando, .slot.concluido { border-color: var(--on); }
+.slot .badge .tag { border-color: var(--on); background: var(--card); color: var(--on); }
+.slot.proximo .badge .tag { border-color: var(--ink-2); background: transparent; color: var(--ink-2); }
+.dotlive { display: inline-block; width: 8px; height: 8px; border-radius: 50%; background: var(--copper); margin-right: 6px; }
+
+/* Entradas */
+.filters { display: flex; flex-wrap: wrap; gap: 10px; margin-bottom: 20px; }
+.filters[hidden] { display: none; }
+.filters button { font: 800 14px var(--f-body); padding: 6px 16px; border: 2.5px solid var(--line); border-radius: 999px; background: var(--card); color: var(--ink); cursor: pointer; }
+.filters button[aria-pressed="true"] { background: var(--accent); color: #fff; }
+:root[data-theme="dark"] .filters button[aria-pressed="true"] { color: var(--on); }
+@media (prefers-color-scheme: dark) { :root:not([data-theme="light"]) .filters button[aria-pressed="true"] { color: var(--on); } }
+.entries { display: flex; flex-direction: column; gap: 22px; }
+.entry { background: var(--card); border: 2.5px solid var(--line); border-radius: 22px; box-shadow: 6px 6px 0 var(--shadow-c); }
+.entry summary { list-style: none; cursor: pointer; display: grid; grid-template-columns: minmax(0, 1fr) auto; align-items: center; gap: 12px 16px; padding: 20px 22px; }
+.entry summary::-webkit-details-marker { display: none; }
+.entry .meta { grid-column: 1; display: flex; flex-wrap: wrap; gap: 8px 10px; align-items: center; font-family: var(--f-mono); font-size: 12px; color: var(--ink-2); }
+.entry h3 { grid-column: 1; margin: 0; font-weight: 800; font-size: clamp(1.25rem, 3.6vw, 1.55rem); line-height: 1.2; text-wrap: balance; }
+.entry .plus {
+  grid-column: 2; grid-row: 1 / span 2; width: 42px; height: 42px; border-radius: 50%; border: 2.5px solid var(--line);
+  background: var(--gold); color: var(--on); display: grid; place-items: center; font: 700 24px/1 var(--f-mono);
+}
+.entry .plus::before { content: "+"; }
+.entry[open] .plus::before { content: "−"; }
+.entry .body { padding: 2px 22px 26px; display: flex; flex-direction: column; gap: 22px; }
+.blk { display: flex; flex-direction: column; gap: 8px; align-items: flex-start; }
+.blk p { margin: 0; max-width: 62ch; }
+.lab { display: inline-block; font-weight: 800; font-size: 13px; padding: 3px 12px; border: 2px solid var(--line); border-radius: 999px; background: var(--c); color: var(--on); }
+.lab.ink { background: var(--ink); color: var(--bg); }
+.bubble { align-self: stretch; background: var(--gold-soft); border: 2.5px dashed var(--line); border-radius: 18px; padding: 14px 16px; }
+.bubble p { max-width: 60ch; }
+
+.code { position: relative; align-self: stretch; background: var(--code-bg); border: 2.5px solid var(--line); border-radius: 16px; }
+.code pre { margin: 0; padding: 48px 18px 18px; overflow-x: auto; font: 400 15px/1.75 var(--f-mono); color: var(--code-fg); tab-size: 4; }
+.code .c { color: var(--code-comment); }
+.code .s { color: var(--olive); }
+.code .k { color: var(--coral); }
+.code .n { color: var(--gold); }
+.copy { position: absolute; top: 10px; right: 10px; font: 700 12px var(--f-mono); background: var(--olive); color: var(--on); border: 2px solid var(--on); border-radius: 999px; padding: 4px 12px; cursor: pointer; }
+.empty { border: 2.5px dashed var(--line); border-radius: 22px; padding: 32px 22px; color: var(--ink-2); font-weight: 700; }
+
+/* Projetos */
+.projects { display: grid; grid-template-columns: repeat(auto-fit, minmax(min(100%, 260px), 1fr)); gap: 22px; padding: 4px; }
+.proj { display: flex; flex-direction: column; gap: 12px; align-items: flex-start; padding: 22px; background: var(--c); color: var(--on); border: 2.5px solid var(--on); border-radius: 22px; box-shadow: 6px 6px 0 var(--shadow-c); }
+.proj:nth-child(odd) { transform: rotate(-.8deg); }
+.proj:nth-child(even) { transform: rotate(.8deg); }
+.proj b { font-weight: 800; font-size: 1.3rem; line-height: 1.2; }
+.proj span.d { font-weight: 700; font-size: 15.5px; }
+.proj .tag { background: var(--card); color: var(--on); border-color: var(--on); }
+
+footer { display: flex; flex-wrap: wrap; justify-content: space-between; gap: 8px 20px; padding-top: 20px; border-top: 2.5px solid var(--line); font-weight: 700; font-size: 14px; color: var(--ink-2); }
+
+@media (max-width: 520px) {
+  .wrap { gap: 56px; }
+  .entry summary { padding: 16px; }
+  .entry .body { padding: 2px 16px 22px; }
+}
+@media (prefers-reduced-motion: no-preference) {
+  .slot, .proj, .entry .plus { transition: transform .18s ease; }
+  .slot:hover, .proj:hover { transform: rotate(0deg) translateY(-3px); }
+  .entry:hover .plus { transform: rotate(90deg); }
+  .dotlive { animation: pulse 1.4s ease-in-out infinite; }
+  @keyframes pulse { 50% { transform: scale(1.6); opacity: .6; } }
+}
+</style>
+
+<div class="wrap">
+  <header class="hero">
+    <div class="hero-text">
+      <h1>Diário<br>de <span class="hl">código</span></h1>
+      <p class="lede">Aqui eu guardo cada passo que dou aprendendo a programar: o que estudei, uma comparação pra entender, o código que escrevi e onde travei.</p>
+      <div class="hero-pills">
+        <span class="pill ink">Bianca Neves</span>
+        <span class="pill">Ciência da Computação, vinda do design gráfico</span>
+        <span class="pill" id="stats"></span>
+      </div>
+    </div>
+    <div class="sticker-wrap">
+      <span class="blob a" aria-hidden="true"></span><span class="blob b" aria-hidden="true"></span>
+      <figure class="photo">
+        <img src="foto.jpg" width="840" height="1050" alt="Retrato da Bianca">
+      </figure>
+      <div class="sticker" aria-hidden="true">
+        <div class="bar"><i></i><i></i><i></i></div>
+<pre><span class="k">print</span>(<span class="s">"Oi, mundo!"</span>)
+<span class="out">Oi, mundo!</span></pre>
+      </div>
+    </div>
+  </header>
+
+  <section aria-labelledby="album-t">
+    <div class="sec-head">
+      <h2 id="album-t">Meu álbum de Python</h2>
+      <p class="note" id="album-n"></p>
+    </div>
+    <div class="album" id="album"></div>
+  </section>
+
+  <section aria-labelledby="ent-t">
+    <div class="sec-head">
+      <h2 id="ent-t">Entradas do diário</h2>
+      <p class="note">As duas primeiras são modelos de como escrever cada passo.</p>
+    </div>
+    <div class="filters" id="filters" hidden></div>
+    <div class="entries" id="entries"></div>
+  </section>
+
+  <section aria-labelledby="proj-t">
+    <div class="sec-head">
+      <h2 id="proj-t">Mini projetos</h2>
+      <p class="note">Ideias pra praticar com o que eu for aprendendo.</p>
+    </div>
+    <div class="projects" id="projects"></div>
+  </section>
+
+  <footer>
+    <span>Atualizado em <span id="updated"></span></span>
+    <span>Feito em HTML, CSS e JavaScript</span>
+  </footer>
+</div>
+
+<script>
+/* ============ CONTEÚDO: é só aqui que você mexe ============ */
+
+// status do passo: "concluido", "estudando" ou "proximo"
+var ROTEIRO = [
+  { t: "Primeiros passos: print e variáveis", s: "estudando" },
+  { t: "Tipos de dados e contas", s: "proximo" },
+  { t: "Decisões com if, elif e else", s: "proximo" },
+  { t: "Repetição com for e while", s: "proximo" },
+  { t: "Listas e dicionários", s: "proximo" },
+  { t: "Funções", s: "proximo" },
+  { t: "Arquivos e tratamento de erros", s: "proximo" },
+  { t: "Primeiro mini projeto completo", s: "proximo" }
+];
+
+var PROJETOS = [
+  { n: "Contador de caracteres de legenda", d: "Digita o texto e mostra quantos caracteres faltam pro limite da rede social.", c: "--coral" },
+  { n: "Gerador de hashtags", d: "Transforma uma lista de palavras em hashtags prontas pra copiar.", c: "--sea" },
+  { n: "Conversor de moedas", d: "Calcula reais em dólar e euro com a cotação que eu digitar.", c: "--olive" }
+];
+
+// Para criar uma entrada nova, copie um bloco abaixo, cole no TOPO da lista e troque os textos.
+// Com "modelo: true" aparece o selo MODELO. Apague essa linha nas suas entradas.
+var ENTRADAS = [
+  {
+    lang: "Python", data: "2026-10-27", modelo: true,
+    titulo: "Falando com o computador: print()",
+    aprendi: "O print() faz o Python escrever algo na tela. Tudo que fica entre aspas é texto, e ele repete exatamente o que estiver ali dentro.",
+    analogia: "É como escrever um recado num cartaz: eu escrevo, o computador cola na parede pra todo mundo ver.",
+    codigo: "# Meu primeiro programa\nprint(\"Olá, mundo!\")\nprint(\"Estou aprendendo Python\")",
+    travei: "Esqueci de fechar as aspas e apareceu SyntaxError. A mensagem assusta, mas ela diz em qual linha está o problema.",
+    proximo: "Guardar valores com variáveis."
+  },
+  {
+    lang: "Python", data: "2026-10-27", modelo: true,
+    titulo: "Variáveis: caixinhas com etiqueta",
+    aprendi: "Uma variável guarda um valor com um nome, pra eu usar depois sem repetir o valor toda hora.",
+    analogia: "Imagine uma caixa com a etiqueta \"nome\". Dentro dela cabe \"Bianca\". Se eu trocar o conteúdo, a etiqueta continua a mesma.",
+    codigo: "nome = \"Bianca\"\nhoras_de_estudo = 2\n\n# print aceita várias coisas separadas por vírgula\nprint(\"Hoje,\", nome, \"estudou\", horas_de_estudo, \"horas\")",
+    travei: "Confundi = com ==. Por enquanto, um sinal de igual só guarda o valor na caixa.",
+    proximo: "Tipos de dados: texto, número e verdadeiro ou falso."
+  }
+];
+
+/* ============ MONTAGEM DA PÁGINA ============ */
+var LANG_COR = { "Python": "--gold", "HTML/CSS": "--copper", "JavaScript": "--olive", "SQL": "--sea" };
+var LABEL = { concluido: "colada", estudando: "estudando agora", proximo: "em breve" };
+var $ = function (id) { return document.getElementById(id); };
+function esc(s) { return String(s).replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/>/g, "&gt;"); }
+function cor(l) { return "var(" + (LANG_COR[l] || "--coral") + ")"; }
+function fmt(iso) {
+  var p = iso.split("-");
+  return new Date(+p[0], +p[1] - 1, +p[2]).toLocaleDateString("pt-BR", { day: "numeric", month: "short", year: "numeric" }).replace(".", "");
+}
+function hl(code) {
+  return esc(code).replace(/(#.*$)|("[^"\n]*"|'[^'\n]*')|\b(print|if|elif|else|for|while|def|in|return|import|and|or|not)\b|\b(\d+)\b/gm, function (m, c, s, k, n) {
+    if (c) return '<span class="c">' + c + "</span>";
+    if (s) return '<span class="s">' + s + "</span>";
+    if (k) return '<span class="k">' + k + "</span>";
+    return '<span class="n">' + n + "</span>";
+  });
+}
+
+// Álbum
+var coladas = ROTEIRO.filter(function (r) { return r.s === "concluido"; }).length;
+var agora = ROTEIRO.filter(function (r) { return r.s === "estudando"; }).length;
+$("album").innerHTML = ROTEIRO.map(function (r, i) {
+  return '<div class="slot ' + r.s + '"><span class="num">' + (i + 1) + '</span><span class="st">' + esc(r.t) +
+    '</span><span class="badge"><span class="tag">' + (r.s === "estudando" ? '<span class="dotlive"></span>' : "") + LABEL[r.s] + "</span></span></div>";
+}).join("");
+$("album-n").textContent = coladas + " de " + ROTEIRO.length + " figurinhas coladas" + (agora ? " · " + agora + " em andamento" : "") + ". Cada passo concluído ganha cor.";
+
+// Projetos
+$("projects").innerHTML = PROJETOS.map(function (p) {
+  return '<div class="proj" style="--c: var(' + p.c + ')"><span class="tag">ideia</span><b>' + esc(p.n) + '</b><span class="d">' + esc(p.d) + "</span></div>";
+}).join("");
+
+// Cabeçalho e rodapé
+var langs = [];
+ENTRADAS.forEach(function (e) { if (langs.indexOf(e.lang) < 0) langs.push(e.lang); });
+$("stats").textContent = ENTRADAS.length + (ENTRADAS.length === 1 ? " entrada" : " entradas") + " · " + langs.length + (langs.length === 1 ? " linguagem" : " linguagens");
+var ultima = ENTRADAS.map(function (e) { return e.data; }).sort().pop();
+$("updated").textContent = ultima ? fmt(ultima) : "—";
+
+// Entradas
+var filtro = "Todas";
+function render() {
+  var lista = ENTRADAS.filter(function (e) { return filtro === "Todas" || e.lang === filtro; });
+  if (!lista.length) {
+    $("entries").innerHTML = '<div class="empty">Nenhuma entrada de ' + esc(filtro) + " ainda. Quando eu começar, o passo a passo aparece aqui.</div>";
+    return;
+  }
+  $("entries").innerHTML = lista.map(function (e, i) {
+    return '<details class="entry"' + (i === 0 ? " open" : "") + ">" +
+      '<summary><div class="meta"><span class="tag" style="--c:' + cor(e.lang) + '">' + esc(e.lang) + "</span>" +
+      (e.modelo ? '<span class="tag plain">modelo</span>' : "") +
+      "<span>" + fmt(e.data) + "</span></div><h3>" + esc(e.titulo) + '</h3><span class="plus" aria-hidden="true"></span></summary>' +
+      '<div class="body">' +
+      '<div class="blk"><span class="lab" style="--c:var(--sea)">O que aprendi</span><p>' + esc(e.aprendi) + "</p></div>" +
+      (e.analogia ? '<div class="blk"><span class="lab" style="--c:var(--gold)">Pra entender melhor</span><div class="bubble"><p>' + esc(e.analogia) + "</p></div></div>" : "") +
+      (e.codigo ? '<div class="blk"><span class="lab ink">Código</span><div class="code"><button class="copy" type="button">Copiar</button><pre><code>' + hl(e.codigo) + "</code></pre></div></div>" : "") +
+      (e.travei ? '<div class="blk"><span class="lab" style="--c:var(--coral)">Onde travei</span><p>' + esc(e.travei) + "</p></div>" : "") +
+      (e.proximo ? '<div class="blk"><span class="lab" style="--c:var(--olive)">Próximo passo</span><p>' + esc(e.proximo) + "</p></div>" : "") +
+      "</div></details>";
+  }).join("");
+}
+
+// Filtro por linguagem: só aparece com 2 ou mais linguagens nas entradas
+if (langs.length > 1) {
+  var box = $("filters");
+  box.hidden = false;
+  ["Todas"].concat(langs).forEach(function (l) {
+    var b = document.createElement("button");
+    b.type = "button"; b.textContent = l; b.setAttribute("aria-pressed", l === filtro ? "true" : "false");
+    b.addEventListener("click", function () {
+      filtro = l;
+      Array.prototype.forEach.call(box.children, function (x) { x.setAttribute("aria-pressed", x === b ? "true" : "false"); });
+      render();
+    });
+    box.appendChild(b);
+  });
+}
+
+// Botão copiar
+document.addEventListener("click", function (ev) {
+  var btn = ev.target.closest && ev.target.closest(".copy");
+  if (!btn) return;
+  var pre = btn.parentNode.querySelector("pre");
+  function volta() { setTimeout(function () { btn.textContent = "Copiar"; }, 1600); }
+  function fallback() {
+    var r = document.createRange(); r.selectNodeContents(pre);
+    var s = window.getSelection(); s.removeAllRanges(); s.addRange(r);
+    btn.textContent = "Selecionado"; volta();
+  }
+  try { navigator.clipboard.writeText(pre.textContent).then(function () { btn.textContent = "Copiado!"; volta(); }, fallback); } catch (e) { fallback(); }
+});
+
+render();
+</script>
